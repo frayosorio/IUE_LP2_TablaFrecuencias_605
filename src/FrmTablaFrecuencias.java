@@ -17,7 +17,15 @@ public class FrmTablaFrecuencias extends JFrame {
     private int totalRespuestas = -1;
 
     private JComboBox cmbRespuesta;
-    JList lstRespuestas;
+    private JList lstRespuestas;
+    private JTable tblFrecuencias;
+
+    private String[] variable = { "Excelente", "Buena", "Regular", "Mala" };
+    private String[] encabezados = { "Variable",
+            "Frecuencia absoluta (f)",
+            "Frecuencia acumulada (F)",
+            "Frecuencia relativa (fr)",
+            "Frecuencia porcentual (%f)" };
 
     // metodo constructor
     public FrmTablaFrecuencias() {
@@ -51,7 +59,6 @@ public class FrmTablaFrecuencias extends JFrame {
         add(cmbRespuesta);
 
         // definir el modelo de datos de la lista desplegable
-        String[] variable = { "Excelente", "Buena", "Regular", "Mala" };
         DefaultComboBoxModel dcm = new DefaultComboBoxModel(variable);
         cmbRespuesta.setModel(dcm);
 
@@ -75,18 +82,12 @@ public class FrmTablaFrecuencias extends JFrame {
 
         // declarar la tabla donde se mostrará el análisis de las frecuencias de las
         // respuestas
-        JTable tblFrecuencias = new JTable();
+        tblFrecuencias = new JTable();
         JScrollPane spFrecuencias = new JScrollPane(tblFrecuencias);
         spFrecuencias.setBounds(10, 205, 470, 200);
         add(spFrecuencias);
 
         // definir el contenido inicial de la tabla
-        String[] encabezados = { "Variable",
-                "Frecuencia absoluta (f)",
-                "Frecuencia acumulada (F)",
-                "Frecuencia relativa (fr)",
-                "Frecuencia porcentual (%f)" };
-
         String[][] datosFrecuencias = new String[variable.length][encabezados.length];
 
         for (int i = 0; i < variable.length; i++) {
@@ -103,6 +104,10 @@ public class FrmTablaFrecuencias extends JFrame {
 
         btnQuitar.addActionListener(evento -> {
             quitarRespuesta();
+        });
+
+        btnCalcular.addActionListener(evento -> {
+            calcularFrecuencias();
         });
 
     }
@@ -127,6 +132,54 @@ public class FrmTablaFrecuencias extends JFrame {
     }
 
     private void quitarRespuesta() {
+        // hay alguna respuesta seleccionada?
+        if (lstRespuestas.getSelectedIndex() >= 0) {
+            int posicion = totalRespuestas - lstRespuestas.getSelectedIndex();
+            for (int i = posicion; i < totalRespuestas; i++) {
+                respuestas[i] = respuestas[i + 1];
+            }
+            totalRespuestas--;
+            mostrarRespuestas();
+        } else {
+            JOptionPane.showMessageDialog(null, "Debe seleccionar la respuesta a quitar");
+        }
+    }
+
+    private void calcularFrecuencias() {
+        // matriz para calcular las frecuencias
+        double[][] frecuencias = new double[variable.length][4];
+        // recorrer todas las respuestas agregadas para calcular la FRECUENCIA ABSOLUTA
+        for (int i = 0; i <= totalRespuestas; i++) {
+            // buscar la posicion de la respuesta en la variable
+            for (int j = 0; j < variable.length; j++) {
+                if (respuestas[i].equals(variable[j])) {
+                    frecuencias[j][0]++;
+                    break;
+                }
+            }
+        }
+
+        // mostrar resultados
+        String[][] datosFrecuencias = new String[variable.length][encabezados.length];
+
+        for (int i = 0; i < variable.length; i++) {
+            if (i == 0) {
+                frecuencias[i][1] = frecuencias[i][0];
+            } else {
+                frecuencias[i][1] = frecuencias[i][0] + frecuencias[i - 1][1];
+            }
+            frecuencias[i][2] = frecuencias[i][0] / (totalRespuestas + 1);
+            frecuencias[i][3] = frecuencias[i][2] * 100;
+
+            datosFrecuencias[i][0] = variable[i];
+            datosFrecuencias[i][1] = String.valueOf(frecuencias[i][0]);
+            datosFrecuencias[i][2] = String.valueOf(frecuencias[i][1]);
+            datosFrecuencias[i][3] = String.valueOf(frecuencias[i][2]);
+            datosFrecuencias[i][4] = String.valueOf(frecuencias[i][3])+" %";
+        }
+
+        DefaultTableModel dtm = new DefaultTableModel(datosFrecuencias, encabezados);
+        tblFrecuencias.setModel(dtm);
 
     }
 
